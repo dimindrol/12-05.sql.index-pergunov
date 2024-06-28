@@ -15,6 +15,7 @@ select distinct concat(c.last_name, ' ', c.first_name), sum(p.amount) over (part
 from payment p, rental r, customer c, inventory i, film f
 where date(p.payment_date) = '2005-07-30' and p.payment_date = r.rental_date and r.customer_id = c.customer_id and i.inventory_id = r.inventory_id
 ```
+```
 Выполним explain запрос:  
 -> Table scan on <temporary>  (cost=2.5..2.5 rows=0) (actual time=9.5..9.56 rows=602 loops=1)  
     -> Temporary table with deduplication  (cost=0..0 rows=0) (actual time=9.5..9.5 rows=602 loops=1)  
@@ -31,7 +32,7 @@ where date(p.payment_date) = '2005-07-30' and p.payment_date = r.rental_date and
                                 -> Single-row index lookup on c using PRIMARY (customer_id=r.customer_id)  (cost=0.25 rows=1) (actual time=752e-6..773e-6 rows=1 loops=642)  
                             -> Single-row index lookup on i using PRIMARY (inventory_id=r.inventory_id)  (cost=0.25 rows=1) (actual time=0.00113..0.00115 rows=1 loops=642)  
                         -> Single-row index lookup on f using PRIMARY (film_id=i.film_id)  (cost=0.25 rows=1) (actual time=0.00117..0.00119 rows=1 loops=642)  
-
+```
 Узкие места:  
 Table Scan - полный скан таблиц достаточно дорогостоящее удовольствие, в данном случае желательно использовать Join для оптимизации запроса  
 Temporary table with deduplication- Создание временной таблицы для удаления дупликатов очень ресурсоемкая задача  
@@ -50,6 +51,7 @@ JOIN inventory i ON i.inventory_id = r.inventory_id
 JOIN  film f ON i.film_id = f.film_id
 WHERE DATE(p.payment_date) = '2005-07-30';
 ```
+```
 -> Window aggregate with buffering: sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title )   (actual time=8.27..9.27 rows=642 loops=1)  
     -> Sort: c.customer_id, f.title  (actual time=8.26..8.29 rows=642 loops=1)  
         -> Stream results  (cost=23803 rows=15990) (actual time=0.1..8.05 rows=642 loops=1)  
@@ -63,7 +65,7 @@ WHERE DATE(p.payment_date) = '2005-07-30';
                         -> Single-row index lookup on c using PRIMARY (customer_id=r.customer_id)  (cost=0.25 rows=1) (actual time=773e-6..795e-6 rows=1 loops=642)  
                     -> Single-row index lookup on i using PRIMARY (inventory_id=r.inventory_id)  (cost=0.25 rows=1) (actual time=0.00113..0.00115 rows=1 loops=642)  
                 -> Single-row index lookup on f using PRIMARY (film_id=i.film_id)  (cost=0.25 rows=1) (actual time=0.00116..0.00119 rows=1 loops=642)  
-                
+```    
 Индексы таблиц которые используется в запросе, помогут ускорить запрос:
 ```sql
 CREATE INDEX idx_payment_date ON payment (payment_date);
