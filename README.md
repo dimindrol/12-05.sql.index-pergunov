@@ -44,7 +44,7 @@ Temporary table with deduplication- Создание временной табл
 Window aggregate with buffering: sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title ) Суммирование sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title ),требует достаточно много ресурсов  
 Исправленный запрос:  
 Использование JOIN улучшает читаемость и ускорить запрос.  
-#### Внесено исправление в условие Where, вместо текста приложен скрин.
+#### Переписано условие Where, вместо текста приложен скриншот.
 ```sql
 EXPLAIN ANALYZE
 SELECT CONCAT(c.last_name, ' ', c.first_name) AS customer_name, 
