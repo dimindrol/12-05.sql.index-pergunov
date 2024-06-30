@@ -3,8 +3,13 @@
 ### Задание 1
 Напишите запрос к учебной базе данных, который вернёт процентное отношение общего размера всех индексов к общему размеру всех таблиц.
 ```sql
-
+SELECT 
+ROUND(SUM(index_length)/SUM(data_length+index_length)*100,2) AS index_table_size
+FROM information_schema.tables
+WHERE table_schema = 'sakila';
 ```
+![image](https://github.com/dimindrol/12-05.sql.index-pergunov/assets/103885836/50e0558b-11f6-46e3-8f4d-7fe9f38602e7)
+
 
 ### Задание 2
 Выполните explain analyze следующего запроса:
