@@ -44,7 +44,7 @@ Temporary table with deduplication- Создание временной табл
 Window aggregate with buffering: sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title ) Суммирование sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title ),требует достаточно много ресурсов  
 Исправленный запрос:  
 Использование JOIN улучшает читаемость и ускорить запрос.  
-
+#### Внесено исправление в условие Where, вместо текста приложен скрин.
 ```sql
 EXPLAIN ANALYZE
 SELECT CONCAT(c.last_name, ' ', c.first_name) AS customer_name, 
@@ -53,24 +53,11 @@ FROM payment p
 JOIN rental r ON p.payment_date = r.rental_date
 JOIN customer c ON r.customer_id = c.customer_id
 JOIN inventory i ON i.inventory_id = r.inventory_id
-JOIN  film f ON i.film_id = f.film_id
-WHERE DATE(p.payment_date) = '2005-07-30';
+JOIN film f ON i.film_id = f.film_id
+WHERE p.payment_date >= '2005-07-30' AND p.payment_date < DATE_ADD('2005-07-30', INTERVAL 1 DAY); #Внесено исправление в соответсвии с замечанием.
 ```
-```
--> Window aggregate with buffering: sum(payment.amount) OVER (PARTITION BY c.customer_id,f.title )   (actual time=8.27..9.27 rows=642 loops=1)  
-    -> Sort: c.customer_id, f.title  (actual time=8.26..8.29 rows=642 loops=1)  
-        -> Stream results  (cost=23803 rows=15990) (actual time=0.1..8.05 rows=642 loops=1)  
-            -> Nested loop inner join  (cost=23803 rows=15990) (actual time=0.0961..7.81 rows=642 loops=1)  
-                -> Nested loop inner join  (cost=18207 rows=15990) (actual time=0.0925..6.98 rows=642 loops=1)  
-                    -> Nested loop inner join  (cost=12610 rows=15990) (actual time=0.0892..6.16 rows=642 loops=1)  
-                        -> Nested loop inner join  (cost=7014 rows=15990) (actual time=0.0842..5.57 rows=642 loops=1)  
-                            -> Filter: (cast(p.payment_date as date) = '2005-07-30')  (cost=1564 rows=15400) (actual time=0.0722..4.47 rows=634 loops=1)  
-                                -> Table scan on p  (cost=1564 rows=15400) (actual time=0.061..3.51 rows=16044 loops=1)  
-                            -> Covering index lookup on r using rental_date (rental_date=p.payment_date)  (cost=0.25 rows=1.04) (actual time=0.00124..0.00161 rows=1.01 loops=634)  
-                        -> Single-row index lookup on c using PRIMARY (customer_id=r.customer_id)  (cost=0.25 rows=1) (actual time=773e-6..795e-6 rows=1 loops=642)  
-                    -> Single-row index lookup on i using PRIMARY (inventory_id=r.inventory_id)  (cost=0.25 rows=1) (actual time=0.00113..0.00115 rows=1 loops=642)  
-                -> Single-row index lookup on f using PRIMARY (film_id=i.film_id)  (cost=0.25 rows=1) (actual time=0.00116..0.00119 rows=1 loops=642)  
-```    
+![image](https://github.com/dimindrol/12-05.sql.index-pergunov/assets/103885836/f78a9497-cc2b-4508-886c-c3e12c9f4ed4)
+    
 Индексы таблиц которые используется в запросе, помогут ускорить запрос:
 ```sql
 CREATE INDEX idx_payment_date ON payment (payment_date);
